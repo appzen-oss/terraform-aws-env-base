@@ -1,6 +1,12 @@
 //
 // Variables specific to module label
 //
+variable "availability_zones" {
+  description = "List of AZ letters to use"
+  type        = "list"
+  default     = ["a", "b", "c"]
+}
+
 variable "aws_region" {
   description = "AWS region to manage resources in"
 }

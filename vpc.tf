@@ -24,8 +24,9 @@ module "vpc" {
   }
 }
 
+# TODO: look into just specifing number of subnets
 locals {
-  availability_zones = ["${formatlist("${var.aws_region}%s", list("a", "b", "c"))}"]
+  availability_zones = ["${formatlist("${var.aws_region}%s", var.availability_zones)}"]
 }
 
 module "dynamic_subnets" {
@@ -118,4 +119,3 @@ module "networking_private_subnet" {
 }
 
 /**/
-
