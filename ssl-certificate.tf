@@ -19,10 +19,10 @@ resource "aws_acm_certificate" "env_wildcard" {
 
 resource "aws_route53_record" "env_wildcard_validation" {
   provider = "aws.member"
-  name     = "${aws_acm_certificate.env_wildcard.domain_validation_options.2.resource_record_name}"
-  type     = "${aws_acm_certificate.env_wildcard.domain_validation_options.2.resource_record_type}"
+  name     = "${aws_acm_certificate.env_wildcard.domain_validation_options.0.resource_record_name}"
+  type     = "${aws_acm_certificate.env_wildcard.domain_validation_options.0.resource_record_type}"
   zone_id  = "${module.domain.zone_id}"
-  records  = ["${aws_acm_certificate.env_wildcard.domain_validation_options.2.resource_record_value}"]
+  records  = ["${aws_acm_certificate.env_wildcard.domain_validation_options.0.resource_record_value}"]
   ttl      = 60
 }
 
@@ -44,10 +44,10 @@ data "aws_route53_zone" "root_domain" {
 resource "aws_route53_record" "root_wildcard_validation" {
   provider = "aws.root_domain"
   allow_overwrite = true
-  name     = "${aws_acm_certificate.env_wildcard.domain_validation_options.0.resource_record_name}"
-  type     = "${aws_acm_certificate.env_wildcard.domain_validation_options.0.resource_record_type}"
+  name     = "${aws_acm_certificate.env_wildcard.domain_validation_options.2.resource_record_name}"
+  type     = "${aws_acm_certificate.env_wildcard.domain_validation_options.2.resource_record_type}"
   zone_id  = "${data.aws_route53_zone.root_domain.zone_id}"
-  records  = ["${aws_acm_certificate.env_wildcard.domain_validation_options.0.resource_record_value}"]
+  records  = ["${aws_acm_certificate.env_wildcard.domain_validation_options.2.resource_record_value}"]
   ttl      = 60
 }
 
