@@ -10,14 +10,28 @@
 #   avail zones should be a variable or lookup
 #   variable region
 
+locals {
+  tags = {
+    Component    = "${var.component}"
+    Environment  = "${var.environment}"
+    #Name         = "${var.account_name}-${var.environment}"
+    Product      = "${var.product}"
+    Service      = "${var.service}"
+    Team         = "${var.team}"
+    Terraform    = true
+    TerraformDir = "${basename(path.root)}"
+  }
+}
+
 module "vpc" {
   source     = "cloudposse/vpc/aws"
-  version    = "0.3.5"
+  version    = "0.3.6"
   namespace  = "${var.organization}"
   stage      = "${replace(var.account_name, "/.*-/", "")}"
   name       = "${var.environment}"
   cidr_block = "${var.vpc_cidr}"
-  tags       = "${map("Environment", "${var.environment}")}"
+  #tags       = "${map("Environment", "${var.environment}")}"
+  tags       = "${local.tags}"
 
   providers = {
     aws = "aws.member"
@@ -30,9 +44,10 @@ locals {
 }
 
 module "dynamic_subnets" {
+  source = "git::https://github.com/appzen-oss/terraform-aws-dynamic-subnets.git?ref=master"
+  #source = "../terraform-aws-dynamic-subnets"
   #source             = "cloudposse/dynamic-subnets/aws"
   #version            = "0.3.8"
-  source = "git::https://github.com/appzen-oss/terraform-aws-dynamic-subnets.git?ref=master"
 
   namespace          = "${var.organization}"
   stage              = "${replace(var.account_name, "/.*-/", "")}"
@@ -42,11 +57,27 @@ module "dynamic_subnets" {
   vpc_id             = "${module.vpc.vpc_id}"
   igw_id             = "${module.vpc.igw_id}"
   cidr_block         = "${module.vpc.vpc_cidr_block}"
+  private_acl_cidr   = "${var.private_acl_cidr}"
+  tags               = "${local.tags}"
 
   providers = {
     aws = "aws.member"
   }
 }
+
+/*
+# Unsure why ERROR with aws_vpc_endpoint.s3_gateway: Error creating VPC Endpoint: InvalidVpcId.NotFound: The Vpc Id vpc-026a1c94071167d32 does not exist
+# S3 endpoint
+resource "aws_vpc_endpoint" "s3_gateway" {
+  vpc_id          = "${module.vpc.vpc_id}"
+  service_name    = "com.amazonaws.${var.aws_region}.s3"
+  #route_table_ids = ["${module.dynamic_subnets.private_route_table_ids}"]
+  vpc_endpoint_type = "Gateway"
+
+  # policy = ""
+  tags               = "${merge(local.tags, map("Name", "${lookup(local.tags, "Name", "${var.account_name}-${var.environment}")}-s3-gateway"))}"
+}
+*/
 
 /**/
 /*
@@ -107,11 +138,13 @@ resource "aws_nat_gateway" "nat" {
 
 module "networking_private_subnet" {
   source          = "git::ssh://git@bitbucket.org/appzeneng/terrazen_library.git//Modules/private_subnet"
+  #source          = "../terrazen_library//Modules/private_subnet"
   name            = "${var.vpc_name}-private-subnet"
   vpc_id          = "${aws_vpc.vpc.id}"
   cidrs           = "${var.private_subnet_cidrs}"
   azs             = "${local.azs_string}"
   nat_gateway_ids = "${join(",", aws_nat_gateway.nat.*.id)}"
+  private_route_cidr  = "${var.private_route_cidr}"
 
   providers = {
     aws = "aws.member"
